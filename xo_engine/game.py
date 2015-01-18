@@ -16,7 +16,7 @@ class GameField(object):
     """Represents game field, game
     cells container.
     """
-    def __init__(self, width=DEFAULT_FIELD_WIDTH, 
+    def __init__(self, width=DEFAULT_FIELD_WIDTH,
             height=DEFAULT_FIELD_HEIGHT,
             field=None):
         self.width = width
@@ -59,21 +59,32 @@ class GameField(object):
         """
         return str(self.__class__.__name__) + "({}, {}, {})".format(self.width, self.height, self._field)
 
+    def as_dict(self):
+        game_field_info = {
+            "cells": self._field,
+            "width": self.width,
+            "height": self.height,
+        }
+        return game_field_info
 
-class GameCell(object):
-    """Represents single cell of game field.
-    """
-    def __init__(self, initial_state=CELL_STATE_EMPTY):
-        self.state = initial_state
 
 
 class Player(object):
     """Represents game player, which makes
     some steps on the game field.
     """
-    def __init__(self, name, cell_state):
+    def __init__(self, id, name, cell_state):
+        self.id = id
         self.name = name
         self.cell_state = cell_state
+
+    def as_dict(self):
+        player_info = {
+            "id": self.id,
+            "name": self.name,
+            "cell_state": self.cell_state,
+        }
+        return player_info
 
 
 class Game(object):
@@ -105,7 +116,7 @@ class Game(object):
         #check horizontal lines
         row_as_sets = [set(row) for row in self.game_field]
         for row_set in row_as_sets:
-            if len(row_set) != 1: 
+            if len(row_set) != 1:
                 continue
             winner_state = tuple(row_set)[0]
             if winner_state != CELL_STATE_EMPTY:
@@ -154,9 +165,27 @@ class Game(object):
                 self.game_over = True
                 return True
 
+        all_cells = set([cell for row in self.game_field for cell in row])
+        if CELL_STATE_EMPTY not in all_cells:
+            #draw is detected
+            self.game_over = True
+            return True
+
 
         return False
 
 
     def get_winner(self):
         return self.winner
+
+    def as_dict(self):
+        game_info = {
+            "field": self.game_field.as_dict(),
+            "player_list": [player.as_dict() for player in self.player_list],
+            "game_over": self.game_over,
+            "winner": None,
+        }
+        if self.winner:
+            game_info["winner"] = self.winner.id
+
+        return game_info
